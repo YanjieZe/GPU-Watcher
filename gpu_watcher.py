@@ -7,7 +7,8 @@ from termcolor import cprint, colored
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('server', type=str, default='none', help='server name')
+# make it not required by default
+parser.add_argument('server', type=str, default='all', help='server name', nargs='?')
 
 
 
@@ -71,7 +72,7 @@ def get_gpu_status(server: str) -> str:
 def watch_gpus():
     # 服务器列表
     args = parser.parse_args()
-    if args.server == 'none':
+    if args.server == 'all':
         # get args    
         servers = ["qizhi", "qizhi2", "qizhi3", "qizhi4",]
     else:
