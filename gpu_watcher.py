@@ -67,7 +67,56 @@ def get_gpu_status(server: str) -> str:
         return ""
     else:
         return process_nvidia_smi_output(output.decode())
+    
+def get_cpu_status(server: str) -> str:
+    # 获取cpu占用率
+    command_cpu = "top -bn1 | grep 'Cpu(s)' | awk '{print $2 + $4}'"
+    command = f"ssh {server} {command_cpu}"
+    
+    process = subprocess.Popen(
+        command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
+    )
+    output, error = process.communicate()
 
+    output = output.decode().strip()
+    # 检查是否有错误
+    if process.returncode != 0:
+        print(f"Error with server {server}: {error.decode()}")
+        return ""
+    else:
+        return colored(f"CPU Usage: {output}%", "green")
+
+def get_memory_status(server: str) -> str:
+    command_memory = "free | grep 'Mem:' "
+    command = f"ssh {server} {command_memory}"
+    
+    process = subprocess.Popen(
+        command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
+    )
+    
+    output, error = process.communicate()
+    
+    # Convert the byte string to a regular string
+    output_str = output.decode("utf-8").strip()
+
+    # Split the string into a list of values
+    values = output_str.split()
+
+    # Extract the used memory and total memory values
+    used_memory = int(values[2])
+    total_memory = int(values[1])
+    
+    # convert byte to GB
+    used_memory = used_memory / 1024 / 1024
+    total_memory = total_memory / 1024 / 1024
+    
+    
+    # 检查是否有错误
+    if process.returncode != 0:
+        print(f"Error with server {server}: {error.decode()}")
+        return ""
+    else:
+        return colored(f"Used Memory: {used_memory:.0f}GB / {total_memory:.0f}GB = {used_memory/total_memory*100:.0f}%", "blue")
 
 def watch_gpus():
     # 服务器列表
@@ -80,6 +129,9 @@ def watch_gpus():
     for server in servers:
         cprint(f"========== {server} =========", "cyan")
         print(get_gpu_status(server))
+        print(get_cpu_status(server))
+        print(get_memory_status(server))
+        print("\n")
 
 
 if __name__ == "__main__":
